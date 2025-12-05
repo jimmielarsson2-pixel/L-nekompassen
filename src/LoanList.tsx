@@ -1,12 +1,5 @@
-import React from "react";
-
-export type Loan = {
-  bank: string;
-  type: string;
-  amount: number;
-  rate: number;
-  monthly: number;
-};
+ import React from "react";
+import { Loan } from "./mockData";
 
 interface LoanListProps {
   loans: Loan[];
@@ -16,33 +9,56 @@ interface LoanListProps {
 export default function LoanList({ loans, onSelect }: LoanListProps) {
   return (
     <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-      <table style={{ width: "90%", borderCollapse: "collapse", marginTop: "20px" }}>
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          fontSize: 13,
+        }}
+      >
         <thead>
-          <tr style={{ background: "#f4f4f4", textAlign: "left" }}>
-            <th>Bank</th>
-            <th>Typ</th>
-            <th>Belopp kvar</th>
-            <th>Ränta</th>
-            <th>Månad</th>
+          <tr
+            style={{
+              background: "#f9fafb",
+              textAlign: "left",
+              color: "#6b7280",
+            }}
+          >
+            <th style={{ padding: "8px 10px" }}>Bank</th>
+            <th style={{ padding: "8px 10px" }}>Typ</th>
+            <th style={{ padding: "8px 10px" }}>Belopp kvar</th>
+            <th style={{ padding: "8px 10px" }}>Ränta</th>
+            <th style={{ padding: "8px 10px" }}>Månad</th>
           </tr>
         </thead>
         <tbody>
           {loans.map((loan, index) => (
             <tr
-  key={index}
-  onClick={() => onSelect?.(loan)}
-  style={{
-    borderBottom: "1px solid #e5e5e5",
-    cursor: "pointer",
-    transition: "background 0.2s ease",
-  }}
-  onMouseEnter={(e) => (e.currentTarget.style.background = "#f5f5f5")}
-  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-              <td>{loan.bank}</td>
-              <td>{loan.type}</td>
-              <td>{loan.amount.toLocaleString("sv-SE")} kr</td>
-              <td>{loan.rate}%</td>
-              <td>{loan.monthly.toLocaleString("sv-SE")} kr</td>
+              key={loan.id ?? index}
+              onClick={() => onSelect?.(loan)}
+              style={{
+                borderBottom: "1px solid #e5e5e5",
+                cursor: "pointer",
+                transition: "background 0.2s ease",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#f5f5f5")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "transparent")
+              }
+            >
+              <td style={{ padding: "8px 10px" }}>{loan.lender}</td>
+              <td style={{ padding: "8px 10px" }}>{loan.category}</td>
+              <td style={{ padding: "8px 10px" }}>
+                {loan.principalRemaining.toLocaleString("sv-SE")} kr
+              </td>
+              <td style={{ padding: "8px 10px" }}>
+                {loan.interestRate.toFixed(2).replace(".", ",")}%
+              </td>
+              <td style={{ padding: "8px 10px" }}>
+                {loan.monthlyPayment.toLocaleString("sv-SE")} kr
+              </td>
             </tr>
           ))}
         </tbody>
