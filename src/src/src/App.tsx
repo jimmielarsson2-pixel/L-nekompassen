@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+ import React, { useMemo, useState } from "react";
 import { mockLoans, Loan } from "./mockData";
 
 type Tab = "overview" | "loans" | "offers";
