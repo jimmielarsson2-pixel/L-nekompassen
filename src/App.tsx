@@ -18,6 +18,9 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(mockLoans[0]);
 
+const handleSelectLoan = (loan: Loan) => {
+  setSelectedLoan(loan);
+};
   const totals = useMemo(() => {
     const totalPrincipal = mockLoans.reduce(
       (sum, loan) => sum + loan.principalRemaining,
@@ -139,11 +142,24 @@ const App: React.FC = () => {
           )}
 
           {activeTab === "loans" && (
-            <>
-              <h2>Låneöversikt</h2>
-              <LoanList loans={mockLoans} onSelect={handleSelectLoan} />
-            </>
-          )}
+  <div
+    style={{
+      display: "flex",
+      gap: "24px",
+      alignItems: "flex-start",
+      marginTop: "8px",
+    }}
+  >
+    <div style={{ flex: 3 }}>
+      <h2>Låneöversikt</h2>
+      <LoanList loans={mockLoans} onSelect={handleSelectLoan} />
+    </div>
+
+    <div style={{ flex: 2 }}>
+      <LoanDetailsPanel loan={selectedLoan} />
+    </div>
+  </div>
+)}
 
           {activeTab === "offers" && (
             <>
@@ -382,6 +398,180 @@ const LoanDetailsPanel: React.FC<{ loan: Loan | null }> = ({ loan }) => {
           I en skarp version hjälper LåneKompassen dig att hitta banker som kan
           ge bättre villkor baserat på just din låneprofil.
         </p>
+      </div>
+    </div>
+  );
+};
+const LoanDetailsPanel: React.FC<{ loan: Loan | null }> = ({ loan }) => {
+  if (!loan) {
+    return (
+      <div
+        style={{
+          marginTop: 20,
+          padding: 16,
+          borderRadius: 12,
+          background: "#f9fafb",
+          border: "1px solid #e5e7eb",
+        }}
+      >
+        <h3 style={{ marginTop: 0, marginBottom: 8 }}>Lånedetaljer</h3>
+        <p style={{ fontSize: 14, color: "#6b7280" }}>
+          Välj ett lån i listan till vänster för att se mer detaljerad
+          information.
+        </p>
+      </div>
+    );
+  }
+
+  // Enkel, ungefärlig uppskattning av ränte/ amorteringsfördelning
+  const yearlyInterestApprox = loan.amount * (loan.rate / 100);
+  const monthlyInterestApprox = yearlyInterestApprox / 12;
+  const monthlyAmortizationApprox = Math.max(
+    0,
+    loan.monthly - monthlyInterestApprox
+  );
+  const yearlyTotalPayment = loan.monthly * 12;
+
+  let riskLabel = "Låg till medelhög räntenivå";
+  let riskColor = "#16a34a";
+
+  if (loan.rate >= 8 && loan.rate < 15) {
+    riskLabel = "Hög räntenivå – kan ofta sänkas";
+    riskColor = "#f59e0b";
+  } else if (loan.rate >= 15) {
+    riskLabel = "Mycket hög räntenivå – bör ses över";
+    riskColor = "#dc2626";
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: 20,
+        padding: 16,
+        borderRadius: 12,
+        background: "white",
+        border: "1px solid #e5e7eb",
+        boxShadow: "0 4px 10px rgba(15, 23, 42, 0.04)",
+      }}
+    >
+      <h3 style={{ marginTop: 0, marginBottom: 4 }}>Lånedetaljer</h3>
+      <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>
+        Markerat lån från tabellen.
+      </p>
+
+      <div
+        style={{
+          marginTop: 16,
+          padding: 12,
+          borderRadius: 8,
+          background: "#f9fafb",
+        }}
+      >
+        <div style={{ fontSize: 13, color: "#6b7280" }}>Bank & typ</div>
+        <div style={{ fontWeight: 600, marginBottom: 4 }}>
+          {loan.bank} – {loan.type}
+        </div>
+        <div style={{ fontSize: 12, color: "#9ca3af" }}>
+          Belopp, ränta och månadskostnad nedan är en förenklad översikt.
+        </div>
+      </div>
+
+      <div
+        style={{
+          marginTop: 16,
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 12,
+          fontSize: 14,
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 12, color: "#6b7280" }}>Belopp kvar</div>
+          <div style={{ fontWeight: 600 }}>
+            {loan.amount.toLocaleString("sv-SE")} kr
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 12, color: "#6b7280" }}>Ränta</div>
+          <div style={{ fontWeight: 600 }}>{loan.rate}%</div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 12, color: "#6b7280" }}>Månadskostnad</div>
+          <div style={{ fontWeight: 600 }}>
+            {loan.monthly.toLocaleString("sv-SE")} kr
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 12, color: "#6b7280" }}>
+            Total kostnad / år
+          </div>
+          <div style={{ fontWeight: 600 }}>
+            {yearlyTotalPayment.toLocaleString("sv-SE")} kr
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          marginTop: 16,
+          padding: 12,
+          borderRadius: 8,
+          background: "#f9fafb",
+        }}
+      >
+        <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>
+          Ungefärlig fördelning per månad
+        </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: 13,
+          }}
+        >
+          <div>
+            <div style={{ color: "#6b7280" }}>Amortering</div>
+            <div style={{ fontWeight: 600 }}>
+              {Math.round(monthlyAmortizationApprox).toLocaleString("sv-SE")} kr
+            </div>
+          </div>
+          <div>
+            <div style={{ color: "#6b7280" }}>Ränta</div>
+            <div style={{ fontWeight: 600 }}>
+              {Math.round(monthlyInterestApprox).toLocaleString("sv-SE")} kr
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          marginTop: 16,
+          padding: 12,
+          borderRadius: 8,
+          background: "#fff7ed",
+          border: "1px solid #fed7aa",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: riskColor,
+            marginBottom: 4,
+          }}
+        >
+          Indikativ bedömning av räntenivå
+        </div>
+        <div style={{ fontSize: 13, color: "#6b7280" }}>{riskLabel}</div>
+        <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>
+          Detta är ingen formell kreditbedömning utan en förenklad indikation
+          baserad på din ränta. I en skarp version kan Lånekompassen hjälpa dig
+          att hitta banker med bättre villkor.
+        </div>
       </div>
     </div>
   );
