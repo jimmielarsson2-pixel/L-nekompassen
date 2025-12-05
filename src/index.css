@@ -1,1 +1,402 @@
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light;
+  color: #0f172a;
+  background-color: #f3f4f6;
+}
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #22c55e, #14b8a6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+
+.app-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.app-subtitle {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-greeting {
+  font-size: 0.9rem;
+}
+
+.user-pill {
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid #374151;
+  font-size: 0.75rem;
+}
+
+.app-nav {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 2rem;
+  background: #020617;
+}
+
+.nav-btn {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.nav-btn.active {
+  background: #e5e7eb;
+  color: #0f172a;
+}
+
+.app-main {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1.2fr);
+  gap: 1.5rem;
+  padding: 1.5rem 2rem 2rem;
+}
+
+.main-left,
+.main-right {
+  min-width: 0;
+}
+
+.main-right {
+  position: sticky;
+  top: 0.75rem;
+  align-self: flex-start;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.kpi-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.08);
+}
+
+.kpi-card.accent {
+  background: linear-gradient(135deg, #22c55e, #14b8a6);
+  color: #022c22;
+}
+
+.kpi-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.kpi-card.accent .kpi-label {
+  color: #d1fae5;
+}
+
+.kpi-value {
+  margin-top: 0.25rem;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.category-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.06);
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.category-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #22c55e;
+}
+
+.category-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.category-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-top: 0.15rem;
+}
+
+.category-row span:first-child {
+  color: #6b7280;
+}
+
+.category-empty {
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+.category-count span:last-child {
+  font-weight: 600;
+}
+
+.loan-list {
+  margin-top: 0.5rem;
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.08);
+  overflow: hidden;
+}
+
+.loan-list-header,
+.loan-row {
+  display: grid;
+  grid-template-columns: 1.6fr 1.1fr 1.4fr 1fr 1.2fr;
+  font-size: 0.8rem;
+}
+
+.loan-list-header {
+  padding: 0.5rem 0.75rem;
+  background: #f9fafb;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.loan-row {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid #f3f4f6;
+  background: white;
+  cursor: pointer;
+  text-align: left;
+}
+
+.loan-row:hover {
+  background: #f3f4ff;
+}
+
+.loan-row span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.details-panel {
+  background: white;
+  border-radius: 0.9rem;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 0.08);
+}
+
+.details-header {
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.details-bank {
+  font-weight: 600;
+}
+
+.details-product {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.details-account {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.details-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.details-label {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.details-value {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.details-split {
+  margin-top: 0.5rem;
+  border-radius: 0.75rem;
+  background: #f9fafb;
+  padding: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.split-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.split-row + .split-row {
+  margin-top: 0.25rem;
+}
+
+.details-advice {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.85rem;
+}
+
+.details-advice h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.9rem;
+}
+
+.offers-panel {
+  background: white;
+  border-radius: 0.9rem;
+  padding: 1rem;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.08);
+  font-size: 0.9rem;
+}
+
+.offers-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #166534;
+  font-size: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.offers-footnote {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.primary-btn {
+  margin-top: 0.75rem;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #22c55e, #14b8a6);
+  color: #022c22;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.primary-btn:hover {
+  filter: brightness(1.05);
+}
+
+@media (max-width: 1024px) {
+  .app-main {
+    grid-template-columns: 1fr;
+  }
+  .main-right {
+    position: static;
+    margin-top: 1rem;
+  }
+  .kpi-grid,
+  .category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .app-header,
+  .app-nav,
+  .app-main {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .kpi-grid,
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+  .loan-list-header,
+  .loan-row {
+    grid-template-columns: 1.4fr 1fr 1fr;
+  }
+  .loan-list-header span:nth-child(3),
+  .loan-list-header span:nth-child(4),
+  .loan-row span:nth-child(3),
+  .loan-row span:nth-child(4) {
+    display: none;
+  }
+}
