@@ -1,8 +1,10 @@
-
  import React, { useMemo, useState } from "react";
 import { mockLoans, Loan } from "./mockData";
 import LoanList from "./LoanList";
+
 type Tab = "overview" | "loans" | "offers";
+
+// Formatters -----------------------------------------------------
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("sv-SE", {
@@ -14,416 +16,292 @@ const formatCurrency = (value: number) =>
 const formatPercent = (value: number) =>
   `${value.toFixed(2).replace(".", ",")}%`;
 
-const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
-  const [selectedLoan, setSelectedLoan] = useState<Loan | null>(mockLoans[0]);
+// ----------------------------------------------------------------
 
-const handleSelectLoan = (loan: Loan) => {
-  setSelectedLoan(loan);
-};
+const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<Tab>("loans");
+  const [selectedLoan, setSelectedLoan] = useState<Loan | null>(
+    mockLoans[0] ?? null
+  );
+
+  const handleSelectLoan = (loan: Loan) => {
+    setSelectedLoan(loan);
+  };
+
+  // Summeringar / totals för översikt -----------------------------
+
   const totals = useMemo(() => {
-    const totalPrincipal = mockLoans.reduce(
-      (sum, loan) => sum + loan.principalRemaining,
-      0
-    );
+    const totalAmount = mockLoans.reduce((sum, loan) => sum + loan.amount, 0);
     const totalMonthly = mockLoans.reduce(
-      (sum, loan) => sum + loan.monthlyPayment,
+      (sum, loan) => sum + loan.monthly,
       0
     );
     const totalInterestWeighted = mockLoans.reduce(
-      (sum, loan) => sum + loan.interestRate * loan.principalRemaining,
+      (sum, loan) => sum + loan.rate * loan.amount,
       0
     );
+
     const avgRate =
-      totalPrincipal > 0 ? totalInterestWeighted / totalPrincipal : 0;
+      totalAmount > 0 ? totalInterestWeighted / totalAmount : 0;
 
     return {
-      totalPrincipal,
+      totalAmount,
       totalMonthly,
       avgRate,
     };
   }, []);
 
-  const loanHealthScore = useMemo(() => {
-    const ratio =
-      totals.totalMonthly > 0
-        ? mockLoans.filter((l) => l.interestRate > 10).length /
-          mockLoans.length
-        : 0;
-    const base = 80 - ratio * 25;
-    return Math.max(30, Math.min(95, Math.round(base)));
-  }, [totals.totalMonthly]);
-
-  const handleSelectLoan = (loan: Loan) => {
-    setSelectedLoan(loan);
-    setActiveTab("loans");
-  };
+  // ----------------------------------------------------------------
 
   return (
-    <div className="app-root">
-      <header className="app-header">
-        <div className="header-left">
-          <div className="logo-circle">LK</div>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f3f4f6",
+        padding: "24px 16px",
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif',
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 1100,
+          margin: "0 auto",
+        }}
+      >
+        {/* Header --------------------------------------------------- */}
+        <header
+          style={{
+            marginBottom: 16,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+          }}
+        >
           <div>
-            <div className="app-title">LåneKompassen</div>
-            <div className="app-subtitle">
-              All dina lån. En tydlig riktning.
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 24,
+                fontWeight: 700,
+                letterSpacing: -0.5,
+              }}
+            >
+              Lånekompassen
+            </h1>
+            <p
+              style={{
+                margin: "4px 0 0",
+                fontSize: 13,
+                color: "#6b7280",
+              }}
+            >
+              Samlad bild av dina lån, räntor och månadskostnader.
+            </p>
+          </div>
+        </header>
+
+        {/* Flik-navigering ----------------------------------------- */}
+        <nav
+          style={{
+            display: "inline-flex",
+            background: "#e5e7eb",
+            borderRadius: 999,
+            padding: 3,
+            marginBottom: 16,
+          }}
+        >
+          {(["overview", "loans", "offers"] as Tab[]).map((tab) => {
+            const isActive = tab === activeTab;
+
+            const label =
+              tab === "overview"
+                ? "Översikt"
+                : tab === "loans"
+                ? "Lån"
+                : "Erbjudanden";
+
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  border: "none",
+                  outline: "none",
+                  cursor: "pointer",
+                  padding: "6px 14px",
+                  borderRadius: 999,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  background: isActive ? "#ffffff" : "transparent",
+                  color: isActive ? "#111827" : "#4b5563",
+                  boxShadow: isActive
+                    ? "0 1px 3px rgba(15,23,42,0.15)"
+                    : "none",
+                  transition: "background 0.15s, color 0.15s, box-shadow 0.15s",
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* INNEHÅLL ------------------------------------------------- */}
+
+        {/* Översikt */
+        activeTab === "overview" && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3,minmax(0,1fr))",
+              gap: 16,
+            }}
+          >
+            <SummaryCard
+              title="Total skuld"
+              value={formatCurrency(totals.totalAmount)}
+              subtitle="Summering av alla lån"
+            />
+            <SummaryCard
+              title="Total månadskostnad"
+              value={formatCurrency(totals.totalMonthly)}
+              subtitle="Summa amortering + ränta / månad"
+            />
+            <SummaryCard
+              title="Genomsnittlig ränta"
+              value={formatPercent(totals.avgRate)}
+              subtitle="Viktad ränta över alla lån"
+            />
+          </div>
+        )}
+
+        {/* Låneöversikt */
+        activeTab === "loans" && (
+          <div
+            style={{
+              display: "flex",
+              gap: 24,
+              alignItems: "flex-start",
+              marginTop: 4,
+            }}
+          >
+            {/* Vänster: tabell */}
+            <div style={{ flex: 3 }}>
+              <div
+                style={{
+                  marginBottom: 8,
+                  fontSize: 18,
+                  fontWeight: 700,
+                }}
+              >
+                Låneöversikt
+              </div>
+
+              <div
+                style={{
+                  background: "#ffffff",
+                  borderRadius: 12,
+                  boxShadow: "0 4px 10px rgba(15,23,42,0.05)",
+                  padding: "12px 12px 16px",
+                }}
+              >
+                <LoanList loans={mockLoans} onSelect={handleSelectLoan} />
+              </div>
+            </div>
+
+            {/* Höger: detaljer */}
+            <div style={{ flex: 2 }}>
+              <LoanDetailsPanel loan={selectedLoan} />
             </div>
           </div>
-        </div>
-        <div className="header-right">
-          <span className="user-greeting">Hej Jimmie 👋</span>
-          <span className="user-pill">Demo-användare</span>
-        </div>
-      </header>
+        )}
 
-      <nav className="app-nav">
-        <button
-          className={activeTab === "overview" ? "nav-btn active" : "nav-btn"}
-          onClick={() => setActiveTab("overview")}
-        >
-          Översikt
-        </button>
-        <button
-          className={activeTab === "loans" ? "nav-btn active" : "nav-btn"}
-          onClick={() => setActiveTab("loans")}
-        >
-          Lån
-        </button>
-        <button
-          className={activeTab === "offers" ? "nav-btn active" : "nav-btn"}
-          onClick={() => setActiveTab("offers")}
-        >
-          Erbjudanden
-        </button>
-      </nav>
+        {/* Erbjudanden / placeholder */
+        activeTab === "offers" && (
+          <div
+            style={{
+              marginTop: 8,
+              padding: 16,
+              borderRadius: 12,
+              background: "#ffffff",
+              boxShadow: "0 4px 10px rgba(15,23,42,0.05)",
+              fontSize: 14,
+            }}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: 8 }}>Erbjudanden</h2>
+            <p style={{ color: "#6b7280", marginTop: 0 }}>
+              Här kan du i nästa steg visa personliga refinansierings-
+              erbjudanden baserat på användarens lån.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
-      <main className="app-main">
-        <section className="main-left">
-          {activeTab === "overview" && (
-            <>
-              <h2>Din lånebild</h2>
-              <div className="kpi-grid">
-                <KpiCard
-                  label="Totalt lånebelopp"
-                  value={formatCurrency(totals.totalPrincipal)}
-                />
-                <KpiCard
-                  label="Total månadskostnad"
-                  value={formatCurrency(totals.totalMonthly)}
-                />
-                <KpiCard
-                  label="Genomsnittlig ränta"
-                  value={formatPercent(totals.avgRate)}
-                />
-                <KpiCard
-                  label="Lånehälsa"
-                  value={`${loanHealthScore} / 100`}
-                  accent
-                />
-              </div>
+// ----------------------------------------------------------------
+// Små komponenter
+// ----------------------------------------------------------------
 
-              <h3 style={{ marginTop: "2rem" }}>Fördelning per lånetyp</h3>
-              <div className="category-grid">
-                {["Bolån", "Privatlån", "Billån", "Kreditkort"].map(
-                  (cat) => (
-                    <CategoryCard
-                      key={cat}
-                      category={cat}
-                      loans={mockLoans.filter((l) => l.category === cat)}
-                    />
-                  )
-                )}
-              </div>
-
-              <h3 style={{ marginTop: "2rem" }}>Alla lån</h3>
-              <LoanList loans={mockLoans} onSelect={handleSelectLoan} />
-            </>
-          )}
-
-          {activeTab === "loans" && (
+const SummaryCard: React.FC<{
+  title: string;
+  value: string;
+  subtitle?: string;
+}> = ({ title, value, subtitle }) => (
   <div
     style={{
-      display: "flex",
-      gap: "24px",
-      alignItems: "flex-start",
-      marginTop: "8px",
+      background: "#ffffff",
+      borderRadius: 12,
+      padding: 14,
+      boxShadow: "0 4px 10px rgba(15,23,42,0.05)",
     }}
   >
-    <div style={{ flex: 3 }}>
-      <h2>Låneöversikt</h2>
-      <LoanList loans={mockLoans} onSelect={handleSelectLoan} />
+    <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 4 }}>
+      {title}
     </div>
-
-    <div style={{ flex: 2 }}>
-      <LoanDetailsPanel loan={selectedLoan} />
-    </div>
-  </div>
-)}
-
-          {activeTab === "offers" && (
-            <>
-              <h2>Förbättra din lånesituation</h2>
-              <OffersPanel loans={mockLoans} totals={totals} />
-            </>
-          )}
-        </section>
-
-        <section className="main-right">
-          <LoanDetailsPanel loan={selectedLoan} />
-        </section>
-      </main>
-    </div>
-  );
-};
-
-const KpiCard: React.FC<{ label: string; value: string; accent?: boolean }> = ({
-  label,
-  value,
-  accent,
-}) => (
-  <div className={accent ? "kpi-card accent" : "kpi-card"}>
-    <div className="kpi-label">{label}</div>
-    <div className="kpi-value">{value}</div>
-  </div>
-);
-
-const CategoryCard: React.FC<{ category: string; loans: Loan[] }> = ({
-  category,
-  loans,
-}) => {
-  const total = loans.reduce((sum, l) => sum + l.principalRemaining, 0);
-  const monthly = loans.reduce((sum, l) => sum + l.monthlyPayment, 0);
-
-  return (
-    <div className="category-card">
-      <div className="category-header">
-        <span className="category-dot" />
-        <span className="category-title">{category}</span>
-      </div>
-      {loans.length === 0 ? (
-        <div className="category-empty">Inga aktiva lån i denna kategori.</div>
-      ) : (
-        <>
-          <div className="category-row">
-            <span>Totalt belopp</span>
-            <span>{formatCurrency(total)}</span>
-          </div>
-          <div className="category-row">
-            <span>Månadskostnad</span>
-            <span>{formatCurrency(monthly)}</span>
-          </div>
-          <div className="category-row category-count">
-            <span>Antal lån</span>
-            <span>{loans.length}</span>
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
-
-const LoanList: React.FC<{ loans: Loan[]; onSelect: (loan: Loan) => void }> = ({
-  loans,
-  onSelect,
-}) => (
-  <div className="loan-list">
-    <div className="loan-list-header">
-      <span>Bank</span>
-      <span>Typ</span>
-      <span>Belopp kvar</span>
-      <span>Ränta</span>
-      <span>Månad</span>
-    </div>
-    {loans.map((loan) => (
-      <button
-        key={loan.id}
-        className="loan-row"
-        onClick={() => onSelect(loan)}
+    <div style={{ fontSize: 20, fontWeight: 700 }}>{value}</div>
+    {subtitle && (
+      <div
+        style={{
+          marginTop: 4,
+          fontSize: 12,
+          color: "#9ca3af",
+        }}
       >
-        <span>{loan.lender}</span>
-        <span>{loan.category}</span>
-        <span>{formatCurrency(loan.principalRemaining)}</span>
-        <span>{formatPercent(loan.interestRate)}</span>
-        <span>{formatCurrency(loan.monthlyPayment)}</span>
-      </button>
-    ))}
+        {subtitle}
+      </div>
+    )}
   </div>
 );
 
-const OffersPanel: React.FC<{
-  loans: Loan[];
-  totals: { totalPrincipal: number; totalMonthly: number; avgRate: number };
-}> = ({ loans, totals }) => {
-  const expensiveLoans = loans.filter((l) => l.interestRate > 8);
-  const expensiveMonthly = expensiveLoans.reduce(
-    (sum, l) => sum + l.monthlyPayment,
-    0
-  );
+// ----------------------------------------------------------------
+// Panel med detaljer om valt lån
+// ----------------------------------------------------------------
 
-  return (
-    <div className="offers-panel">
-      <div className="offers-badge">Analys baserad på dina nuvarande lån</div>
-      {expensiveLoans.length === 0 ? (
-        <p>
-          Just nu ser din lånebild relativt sund ut. Vi kommer att visa
-          förbättringsförslag här om dina villkor förändras.
-        </p>
-      ) : (
-        <>
-          <h3>Samlingslån – uppskattad besparing</h3>
-          <p>
-            Du har {expensiveLoans.length} lån med ränta över{" "}
-            <strong>8%</strong>. Genom att samla dessa till ett nytt lån med
-            lägre ränta kan du i många fall sänka din månadskostnad.
-          </p>
-          <p style={{ marginTop: "0.5rem" }}>
-            Dagens månadskostnad för dessa lån:{" "}
-            <strong>{formatCurrency(expensiveMonthly)}</strong>
-          </p>
-          <p>
-            Om räntan sänks med t.ex. 3 procentenheter kan din uppskattade
-            besparing bli{" "}
-            <strong>{formatCurrency(Math.round(expensiveMonthly * 0.15))}</strong>{" "}
-            per månad.
-          </p>
-
-          <button
-            className="primary-btn"
-            onClick={() =>
-              alert(
-                "I en riktig version skulle du nu kunna skicka en intresseförfrågan till anslutna banker."
-              )
-            }
-          >
-            Skicka intresseförfrågan
-          </button>
-        </>
-      )}
-
-      <div className="offers-footnote">
-        Detta är en förenklad demo-beräkning. I skarp version används
-        detaljerad kreditdata och individuella bankerbjudanden.
-      </div>
-    </div>
-  );
-};
-
-const LoanDetailsPanel: React.FC<{ loan: Loan | null }> = ({ loan }) => {
-  if (!loan) {
-    return (
-      <div className="details-panel">
-        <h2>Lånedetaljer</h2>
-        <p>Välj ett lån i listan till vänster för att se detaljer.</p>
-      </div>
-    );
-  }
-
-  const totalCost = loan.monthlyPayment * loan.monthsRemaining;
-  const approxInterestCost = totalCost - loan.principalRemaining;
-  const monthlyInterestShare = (approxInterestCost / loan.monthsRemaining) || 0;
-  const monthlyAmortization = loan.monthlyPayment - monthlyInterestShare;
-
-  return (
-    <div className="details-panel">
-      <h2>Lånedetaljer</h2>
-      <div className="details-header">
-        <div className="details-bank">{loan.lender}</div>
-        <div className="details-product">{loan.productName}</div>
-        <div className="details-account">{loan.accountNumberMasked}</div>
-      </div>
-
-      <div className="details-grid">
-        <div className="details-item">
-          <span className="details-label">Kategori</span>
-          <span className="details-value">{loan.category}</span>
-        </div>
-        <div className="details-item">
-          <span className="details-label">Kvarvarande skuld</span>
-          <span className="details-value">
-            {formatCurrency(loan.principalRemaining)}
-          </span>
-        </div>
-        <div className="details-item">
-          <span className="details-label">Ränta</span>
-          <span className="details-value">
-            {formatPercent(loan.interestRate)}
-          </span>
-        </div>
-        <div className="details-item">
-          <span className="details-label">Månadskostnad</span>
-          <span className="details-value">
-            {formatCurrency(loan.monthlyPayment)}
-          </span>
-        </div>
-        <div className="details-item">
-          <span className="details-label">Månader kvar</span>
-          <span className="details-value">{loan.monthsRemaining}</span>
-        </div>
-        <div className="details-item">
-          <span className="details-label">Total kvarvarande kostnad</span>
-          <span className="details-value">
-            {formatCurrency(Math.round(totalCost))}
-          </span>
-        </div>
-      </div>
-
-      <h3 style={{ marginTop: "1.5rem" }}>Månadens fördelning (ungefär)</h3>
-      <div className="details-split">
-        <div className="split-row">
-          <span>Amortering</span>
-          <span>{formatCurrency(Math.round(monthlyAmortization))}</span>
-        </div>
-        <div className="split-row">
-          <span>Räntekostnad</span>
-          <span>{formatCurrency(Math.round(monthlyInterestShare))}</span>
-        </div>
-      </div>
-
-      <div className="details-advice">
-        <h4>Rådgivande notis</h4>
-        <p>
-          Om du kan sänka räntan på detta lån med{" "}
-          <strong>1 procentenhet</strong> minskar din totala kostnad med cirka{" "}
-          <strong>
-            {formatCurrency(
-              Math.round(
-                (loan.principalRemaining * 0.01 * loan.monthsRemaining) / 12
-              )
-            )}
-          </strong>{" "}
-          över återstående löptid.
-        </p>
-        <p>
-          I en skarp version hjälper LåneKompassen dig att hitta banker som kan
-          ge bättre villkor baserat på just din låneprofil.
-        </p>
-      </div>
-    </div>
-  );
-};
 const LoanDetailsPanel: React.FC<{ loan: Loan | null }> = ({ loan }) => {
   if (!loan) {
     return (
       <div
         style={{
-          marginTop: 20,
+          marginTop: 28,
           padding: 16,
           borderRadius: 12,
           background: "#f9fafb",
           border: "1px solid #e5e7eb",
+          fontSize: 14,
         }}
       >
         <h3 style={{ marginTop: 0, marginBottom: 8 }}>Lånedetaljer</h3>
-        <p style={{ fontSize: 14, color: "#6b7280" }}>
-          Välj ett lån i listan till vänster för att se mer detaljerad
-          information.
+        <p style={{ margin: 0, color: "#6b7280" }}>
+          Klicka på ett lån i tabellen till vänster för att se detaljer.
         </p>
       </div>
     );
   }
 
-  // Enkel, ungefärlig uppskattning av ränte/ amorteringsfördelning
+  // Enkel uppskattning
   const yearlyInterestApprox = loan.amount * (loan.rate / 100);
   const monthlyInterestApprox = yearlyInterestApprox / 12;
   const monthlyAmortizationApprox = Math.max(
@@ -446,70 +324,64 @@ const LoanDetailsPanel: React.FC<{ loan: Loan | null }> = ({ loan }) => {
   return (
     <div
       style={{
-        marginTop: 20,
+        marginTop: 28,
         padding: 16,
         borderRadius: 12,
-        background: "white",
+        background: "#ffffff",
         border: "1px solid #e5e7eb",
-        boxShadow: "0 4px 10px rgba(15, 23, 42, 0.04)",
+        boxShadow: "0 4px 10px rgba(15,23,42,0.05)",
+        fontSize: 14,
       }}
     >
       <h3 style={{ marginTop: 0, marginBottom: 4 }}>Lånedetaljer</h3>
       <p style={{ margin: 0, fontSize: 13, color: "#6b7280" }}>
-        Markerat lån från tabellen.
+        Markerat lån från låneöversikten.
       </p>
 
       <div
         style={{
-          marginTop: 16,
-          padding: 12,
+          marginTop: 12,
+          padding: 10,
           borderRadius: 8,
           background: "#f9fafb",
         }}
       >
-        <div style={{ fontSize: 13, color: "#6b7280" }}>Bank & typ</div>
-        <div style={{ fontWeight: 600, marginBottom: 4 }}>
+        <div style={{ fontSize: 12, color: "#6b7280" }}>Bank & typ</div>
+        <div style={{ fontWeight: 600 }}>
           {loan.bank} – {loan.type}
-        </div>
-        <div style={{ fontSize: 12, color: "#9ca3af" }}>
-          Belopp, ränta och månadskostnad nedan är en förenklad översikt.
         </div>
       </div>
 
       <div
         style={{
-          marginTop: 16,
+          marginTop: 14,
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
           gap: 12,
-          fontSize: 14,
         }}
       >
         <div>
           <div style={{ fontSize: 12, color: "#6b7280" }}>Belopp kvar</div>
           <div style={{ fontWeight: 600 }}>
-            {loan.amount.toLocaleString("sv-SE")} kr
+            {formatCurrency(loan.amount)}
           </div>
         </div>
-
         <div>
           <div style={{ fontSize: 12, color: "#6b7280" }}>Ränta</div>
-          <div style={{ fontWeight: 600 }}>{loan.rate}%</div>
+          <div style={{ fontWeight: 600 }}>{formatPercent(loan.rate)}</div>
         </div>
-
         <div>
           <div style={{ fontSize: 12, color: "#6b7280" }}>Månadskostnad</div>
           <div style={{ fontWeight: 600 }}>
-            {loan.monthly.toLocaleString("sv-SE")} kr
+            {formatCurrency(loan.monthly)}
           </div>
         </div>
-
         <div>
           <div style={{ fontSize: 12, color: "#6b7280" }}>
             Total kostnad / år
           </div>
           <div style={{ fontWeight: 600 }}>
-            {yearlyTotalPayment.toLocaleString("sv-SE")} kr
+            {formatCurrency(yearlyTotalPayment)}
           </div>
         </div>
       </div>
@@ -517,7 +389,7 @@ const LoanDetailsPanel: React.FC<{ loan: Loan | null }> = ({ loan }) => {
       <div
         style={{
           marginTop: 16,
-          padding: 12,
+          padding: 10,
           borderRadius: 8,
           background: "#f9fafb",
         }}
@@ -535,13 +407,13 @@ const LoanDetailsPanel: React.FC<{ loan: Loan | null }> = ({ loan }) => {
           <div>
             <div style={{ color: "#6b7280" }}>Amortering</div>
             <div style={{ fontWeight: 600 }}>
-              {Math.round(monthlyAmortizationApprox).toLocaleString("sv-SE")} kr
+              {formatCurrency(Math.round(monthlyAmortizationApprox))}
             </div>
           </div>
           <div>
             <div style={{ color: "#6b7280" }}>Ränta</div>
             <div style={{ fontWeight: 600 }}>
-              {Math.round(monthlyInterestApprox).toLocaleString("sv-SE")} kr
+              {formatCurrency(Math.round(monthlyInterestApprox))}
             </div>
           </div>
         </div>
@@ -550,7 +422,7 @@ const LoanDetailsPanel: React.FC<{ loan: Loan | null }> = ({ loan }) => {
       <div
         style={{
           marginTop: 16,
-          padding: 12,
+          padding: 10,
           borderRadius: 8,
           background: "#fff7ed",
           border: "1px solid #fed7aa",
@@ -567,7 +439,13 @@ const LoanDetailsPanel: React.FC<{ loan: Loan | null }> = ({ loan }) => {
           Indikativ bedömning av räntenivå
         </div>
         <div style={{ fontSize: 13, color: "#6b7280" }}>{riskLabel}</div>
-        <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 6 }}>
+        <div
+          style={{
+            fontSize: 11,
+            color: "#9ca3af",
+            marginTop: 6,
+          }}
+        >
           Detta är ingen formell kreditbedömning utan en förenklad indikation
           baserad på din ränta. I en skarp version kan Lånekompassen hjälpa dig
           att hitta banker med bättre villkor.
