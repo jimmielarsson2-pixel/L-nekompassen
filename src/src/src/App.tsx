@@ -367,7 +367,7 @@ const LoanDetailsPanel: React.FC<{ loan: Loan | null }> = ({ loan }) => {
         <h4>Rådgivande notis</h4>
         <p>
           Om du kan sänka räntan på detta lån med{" "}
-            <strong>1 procentenhet</strong> minskar din totala kostnad med cirka{" "}
+          <strong>1 procentenhet</strong> minskar din totala kostnad med cirka{" "}
           <strong>
             {formatCurrency(
               Math.round(
