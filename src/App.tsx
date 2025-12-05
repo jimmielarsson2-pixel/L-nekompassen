@@ -1,7 +1,7 @@
 
  import React, { useMemo, useState } from "react";
 import { mockLoans, Loan } from "./mockData";
-
+import LoanList from "./LoanList";
 type Tab = "overview" | "loans" | "offers";
 
 const formatCurrency = (value: number) =>
