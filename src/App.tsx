@@ -4,8 +4,7 @@ import LoanList from "./LoanList";
 
 type Tab = "overview" | "loans" | "offers";
 
-// Formatters -----------------------------------------------------
-
+// --------- Hjälpfunktioner för formatering ----------
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("sv-SE", {
     style: "currency",
@@ -16,7 +15,7 @@ const formatCurrency = (value: number) =>
 const formatPercent = (value: number) =>
   `${value.toFixed(2).replace(".", ",")}%`;
 
-// ----------------------------------------------------------------
+// ----------------------------------------------------
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>("loans");
@@ -28,31 +27,32 @@ const App: React.FC = () => {
     setSelectedLoan(loan);
   };
 
-  // Summeringar / totals för översikt -----------------------------
-
+  // ------- Summeringar till översiktsfliken ----------
   const totals = useMemo(() => {
-    const totalAmount = mockLoans.reduce((sum, loan) => sum + loan.amount, 0);
+    const totalPrincipal = mockLoans.reduce(
+      (sum, loan) => sum + loan.principalRemaining,
+      0
+    );
     const totalMonthly = mockLoans.reduce(
-      (sum, loan) => sum + loan.monthly,
+      (sum, loan) => sum + loan.monthlyPayment,
       0
     );
     const totalInterestWeighted = mockLoans.reduce(
-      (sum, loan) => sum + loan.rate * loan.amount,
+      (sum, loan) => sum + loan.interestRate * loan.principalRemaining,
       0
     );
 
     const avgRate =
-      totalAmount > 0 ? totalInterestWeighted / totalAmount : 0;
+      totalPrincipal > 0 ? totalInterestWeighted / totalPrincipal : 0;
 
     return {
-      totalAmount,
+      totalPrincipal,
       totalMonthly,
       avgRate,
     };
   }, []);
 
-  // ----------------------------------------------------------------
-
+  // ----------------------------------------------------
   return (
     <div
       style={{
@@ -69,7 +69,7 @@ const App: React.FC = () => {
           margin: "0 auto",
         }}
       >
-        {/* Header --------------------------------------------------- */}
+        {/* Header */}
         <header
           style={{
             marginBottom: 16,
@@ -101,7 +101,7 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        {/* Flik-navigering ----------------------------------------- */}
+        {/* Flikar */}
         <nav
           style={{
             display: "inline-flex",
@@ -147,10 +147,10 @@ const App: React.FC = () => {
           })}
         </nav>
 
-        {/* INNEHÅLL ------------------------------------------------- */}
+        {/* --------- INNEHÅLL --------- */}
 
-        {/* Översikt */
-        activeTab === "overview" && (
+        {/* Översikt */}
+        {activeTab === "overview" && (
           <div
             style={{
               display: "grid",
@@ -160,7 +160,7 @@ const App: React.FC = () => {
           >
             <SummaryCard
               title="Total skuld"
-              value={formatCurrency(totals.totalAmount)}
+              value={formatCurrency(totals.totalPrincipal)}
               subtitle="Summering av alla lån"
             />
             <SummaryCard
@@ -176,8 +176,8 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Låneöversikt */
-        activeTab === "loans" && (
+        {/* Låneöversikt */}
+        {activeTab === "loans" && (
           <div
             style={{
               display: "flex",
@@ -203,7 +203,7 @@ const App: React.FC = () => {
                   background: "#ffffff",
                   borderRadius: 12,
                   boxShadow: "0 4px 10px rgba(15,23,42,0.05)",
-                  padding: "12px 12px 16px",
+                  padding: "8px 12px 12px",
                 }}
               >
                 <LoanList loans={mockLoans} onSelect={handleSelectLoan} />
@@ -217,8 +217,8 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Erbjudanden / placeholder */
-        activeTab === "offers" && (
+        {/* Erbjudanden (placeholder) */}
+        {activeTab === "offers" && (
           <div
             style={{
               marginTop: 8,
@@ -231,8 +231,8 @@ const App: React.FC = () => {
           >
             <h2 style={{ marginTop: 0, marginBottom: 8 }}>Erbjudanden</h2>
             <p style={{ color: "#6b7280", marginTop: 0 }}>
-              Här kan du i nästa steg visa personliga refinansierings-
-              erbjudanden baserat på användarens lån.
+              Här kan du i nästa steg visa personliga
+              refinansieringserbjudanden baserat på användarens lån.
             </p>
           </div>
         )}
@@ -241,9 +241,7 @@ const App: React.FC = () => {
   );
 };
 
-// ----------------------------------------------------------------
-// Små komponenter
-// ----------------------------------------------------------------
+// ---------- Små komponenter / kort ----------
 
 const SummaryCard: React.FC<{
   title: string;
@@ -276,9 +274,7 @@ const SummaryCard: React.FC<{
   </div>
 );
 
-// ----------------------------------------------------------------
-// Panel med detaljer om valt lån
-// ----------------------------------------------------------------
+// ---------- Panel med detaljer om valt lån ----------
 
 const LoanDetailsPanel: React.FC<{ loan: Loan | null }> = ({ loan }) => {
   if (!loan) {
@@ -301,22 +297,22 @@ const LoanDetailsPanel: React.FC<{ loan: Loan | null }> = ({ loan }) => {
     );
   }
 
-  // Enkel uppskattning
-  const yearlyInterestApprox = loan.amount * (loan.rate / 100);
+  const yearlyInterestApprox =
+    loan.principalRemaining * (loan.interestRate / 100);
   const monthlyInterestApprox = yearlyInterestApprox / 12;
   const monthlyAmortizationApprox = Math.max(
     0,
-    loan.monthly - monthlyInterestApprox
+    loan.monthlyPayment - monthlyInterestApprox
   );
-  const yearlyTotalPayment = loan.monthly * 12;
+  const yearlyTotalPayment = loan.monthlyPayment * 12;
 
   let riskLabel = "Låg till medelhög räntenivå";
   let riskColor = "#16a34a";
 
-  if (loan.rate >= 8 && loan.rate < 15) {
+  if (loan.interestRate >= 8 && loan.interestRate < 15) {
     riskLabel = "Hög räntenivå – kan ofta sänkas";
     riskColor = "#f59e0b";
-  } else if (loan.rate >= 15) {
+  } else if (loan.interestRate >= 15) {
     riskLabel = "Mycket hög räntenivå – bör ses över";
     riskColor = "#dc2626";
   }
@@ -348,8 +344,9 @@ const LoanDetailsPanel: React.FC<{ loan: Loan | null }> = ({ loan }) => {
       >
         <div style={{ fontSize: 12, color: "#6b7280" }}>Bank & typ</div>
         <div style={{ fontWeight: 600 }}>
-          {loan.bank} – {loan.type}
+          {loan.lender} – {loan.category}
         </div>
+        <div style={{ fontSize: 12, color: "#9ca3af" }}>{loan.productName}</div>
       </div>
 
       <div
@@ -363,17 +360,19 @@ const LoanDetailsPanel: React.FC<{ loan: Loan | null }> = ({ loan }) => {
         <div>
           <div style={{ fontSize: 12, color: "#6b7280" }}>Belopp kvar</div>
           <div style={{ fontWeight: 600 }}>
-            {formatCurrency(loan.amount)}
+            {formatCurrency(loan.principalRemaining)}
           </div>
         </div>
         <div>
           <div style={{ fontSize: 12, color: "#6b7280" }}>Ränta</div>
-          <div style={{ fontWeight: 600 }}>{formatPercent(loan.rate)}</div>
+          <div style={{ fontWeight: 600 }}>
+            {formatPercent(loan.interestRate)}
+          </div>
         </div>
         <div>
           <div style={{ fontSize: 12, color: "#6b7280" }}>Månadskostnad</div>
           <div style={{ fontWeight: 600 }}>
-            {formatCurrency(loan.monthly)}
+            {formatCurrency(loan.monthlyPayment)}
           </div>
         </div>
         <div>
